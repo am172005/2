@@ -1,0 +1,52 @@
+import torch
+import torch.nn as nn
+import torch.optim as optim
+from sklearn.datasets import load_iris
+from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import StandardScaler
+
+# Load Dataset
+iris = load_iris()
+X = iris.data
+y = iris.target
+
+# Normalize features
+scaler = StandardScaler()
+X = scaler.fit_transform(X)
+
+X = torch.tensor(X, dtype=torch.float32)
+y = torch.tensor(y, dtype=torch.long)
+
+# Split Dataset
+X_train, X_test, y_train, y_test = train_test_split(
+    X, y, test_size=0.2, random_state=42)
+
+# Deep Neural Network
+model = nn.Sequential(
+    nn.Linear(4, 16),
+    nn.ReLU(),
+    nn.Linear(16, 8),
+    nn.ReLU(),
+    nn.Linear(8, 3)
+)
+
+# Loss and Optimizer
+loss_fn = nn.CrossEntropyLoss()
+optimizer = optim.Adam(model.parameters(), lr=0.01)
+
+# Training
+for epoch in range(100):
+    output = model(X_train)
+    loss = loss_fn(output, y_train)
+    optimizer.zero_grad()
+    loss.backward()
+    optimizer.step()
+    if (epoch+1) % 10 == 0:
+        print("Epoch", epoch+1, "Loss =", round(loss.item(), 4))
+
+# Testing
+with torch.no_grad():
+    pred = model(X_test).argmax(1)
+    acc = (pred == y_test).float().mean()
+
+print("\nAccuracy =", round(acc.item()*100, 2), "%")
